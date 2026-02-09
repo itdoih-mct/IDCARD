@@ -97,20 +97,16 @@ canvas {
     <div style="margin-top:25px; padding:15px; background:rgba(201,160,53,0.1); border-radius:10px; border: 1px solid rgba(201,160,53,0.3)">
         <p style="font-size: 11px; margin:0; color: #e2c36a; line-height:1.5">
             <strong>PRINTING GUIDE:</strong><br>
-            1. Press <b>Ctrl + P</b> on your keyboard.<br>
-            2. Set <b>Margins</b> to <b>None</b>.<br>
-            3. Turn <b>Background Graphics</b> to <b>ON</b>.
+            1. Press <b>Ctrl + P</b>.<br>
+            2. <b>Margins:</b> None.<br>
+            3. <b>Background Graphics:</b> ON.
         </p>
     </div>
   </div>
 
   <div id="print-area">
-    <div class="card-wrapper">
-        <canvas id="fc"></canvas>
-    </div>
-    <div class="card-wrapper" style="margin-top: 20px;">
-        <canvas id="bc"></canvas>
-    </div>
+    <div class="card-wrapper"><canvas id="fc"></canvas></div>
+    <div class="card-wrapper" style="margin-top: 20px;"><canvas id="bc"></canvas></div>
   </div>
 </div>
 
@@ -158,7 +154,7 @@ function loadPhoto(e) {
         const i = new Image();
         i.onload = () => { 
             imgs.photo = i; 
-            aspect = i.width / i.height; // Capture original shape
+            aspect = i.width / i.height; 
             photo.h = photo.w / aspect; 
             draw(); 
         };
@@ -168,96 +164,63 @@ function loadPhoto(e) {
 }
 
 async function removeBackgroundAI() {
-    if (!rawPhotoFile) return alert("Please upload a photo first!");
+    if (!rawPhotoFile) return alert("Upload photo first!");
     const btn = document.getElementById('aiBtn');
-    btn.innerText = "⏳ Processing...";
-    btn.disabled = true;
-
-    const formData = new FormData();
-    formData.append('image_file', rawPhotoFile);
-    formData.append('size', 'auto');
-
+    btn.innerText = "⏳ Processing..."; btn.disabled = true;
+    const fd = new FormData(); fd.append('image_file', rawPhotoFile); fd.append('size', 'auto');
     try {
-        const response = await fetch('https://api.remove.bg/v1.0/removebg', {
-            method: 'POST',
-            headers: { 'X-Api-Key': SECURE_KEY },
-            body: formData
+        const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+            method: 'POST', headers: { 'X-Api-Key': SECURE_KEY }, body: fd
         });
-
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
+        if (res.ok) {
+            const blob = await res.blob();
             const i = new Image();
             i.onload = () => { 
-                imgs.photo = i; 
-                aspect = i.width / i.height;
-                photo.h = photo.w / aspect;
-                draw(); 
-                btn.innerText = "✅ Done!"; 
-                btn.disabled = false; 
+                imgs.photo = i; aspect = i.width / i.height;
+                photo.h = photo.w / aspect; draw(); 
+                btn.innerText = "✅ Done!"; btn.disabled = false; 
             };
-            i.src = url;
-        } else {
-            alert("AI Error. Check API Key or Credits.");
-            btn.innerText = "✨ Remove Background (AI)";
-            btn.disabled = false;
+            i.src = URL.createObjectURL(blob);
         }
-    } catch (e) {
-        alert("Connection Error.");
-        btn.disabled = false;
-    }
+    } catch (e) { alert("AI Error"); btn.disabled = false; }
 }
 
 function drawAutoText(text, x, y, maxW, maxS, weight) {
-    let s = maxS;
-    fctx.fillStyle = "#000";
-    do {
-        fctx.font = `${weight} ${s}px 'Inter'`;
-        s--;
-    } while(fctx.measureText(text).width > maxW && s > 24);
+    let s = maxS; fctx.fillStyle = "#000";
+    do { fctx.font = `${weight} ${s}px 'Inter'`; s--; } 
+    while(fctx.measureText(text).width > maxW && s > 24);
     fctx.fillText(text, x, y);
 }
 
 function draw() {
+    // FRONT
     fctx.clearRect(0, 0, 1011, 638);
     if(imgs.front.complete) fctx.drawImage(imgs.front, 0, 0, 1011, 638);
     if(imgs.photo) {
         fctx.drawImage(imgs.photo, photo.x, photo.y, photo.w, photo.h);
-        // Larger Gold Resize Handle for fingers
-        fctx.fillStyle = "rgba(201, 160, 53, 0.9)";
-        fctx.beginPath();
-        fctx.arc(photo.x + photo.w, photo.y + photo.h, 15, 0, Math.PI * 2);
-        fctx.fill();
+        fctx.fillStyle = "rgba(201, 160, 53, 0.9)"; fctx.beginPath();
+        fctx.arc(photo.x + photo.w, photo.y + photo.h, 15, 0, Math.PI * 2); fctx.fill();
     }
     if(imgs.overlay.complete) fctx.drawImage(imgs.overlay, overlay.x, overlay.y, overlay.w, overlay.h);
-    
-    // CORRECTION: Removed .toUpperCase() to allow normal typing
     if(fn.value.trim() !== "") drawAutoText(fn.value, LEFT_MARGIN, 465, 460, 46, 800);
     if(dg.value.trim() !== "") drawAutoText(dg.value, LEFT_MARGIN, 525, 420, 34, 700);
     if(idn.value.trim() !== "") drawAutoText("ID No - " + idn.value, LEFT_MARGIN, 580, 420, 30, 700);
 
+    // BACK SIDE - Refined 1mm zoom (12px offset)
     bctx.clearRect(0, 0, 1011, 638);
-    if(imgs.back.complete) bctx.drawImage(imgs.back, 0, 0, 1011, 638);
+    if(imgs.back.complete) {
+        bctx.drawImage(imgs.back, -12, -12, 1035, 662);
+    }
 }
 
-// TOUCH SUPPORT: Pointer Events handle Mouse + Touch fingers
+// INTERACTION
 fc.onpointerdown = e => {
     const r = fc.getBoundingClientRect();
     const x = (e.clientX - r.left) * (1011 / r.width);
     const y = (e.clientY - r.top) * (638 / r.height);
-    
-    // Resize Detection (Corner Circle Handle)
-    if(imgs.photo && Math.hypot(x - (photo.x + photo.w), y - (photo.y + photo.h)) < 35) { 
-        drag = photo; mode = "resize"; return; 
-    }
-    // Overlay Move
-    if(!overlayLocked && x > overlay.x && x < overlay.x + overlay.w && y > overlay.y && y < overlay.y + overlay.h) { 
-        drag = overlay; mode = "move"; ox = x - overlay.x; oy = y - overlay.y; return; 
-    }
-    // Photo Move
-    if(imgs.photo && x > photo.x && x < photo.x + photo.w && y > photo.y && y < photo.y + photo.h) { 
-        drag = photo; mode = "move"; ox = x - photo.x; oy = y - photo.y; 
-    }
+    if(imgs.photo && Math.hypot(x - (photo.x + photo.w), y - (photo.y + photo.h)) < 35) { drag = photo; mode = "resize"; return; }
+    if(!overlayLocked && x > overlay.x && x < overlay.x + overlay.w && y > overlay.y && y < overlay.y + overlay.h) { drag = overlay; mode = "move"; ox = x - overlay.x; oy = y - overlay.y; return; }
+    if(imgs.photo && x > photo.x && x < photo.x + photo.w && y > photo.y && y < photo.y + photo.h) { drag = photo; mode = "move"; ox = x - photo.x; oy = y - photo.y; }
 };
 
 window.onpointermove = e => {
@@ -265,14 +228,10 @@ window.onpointermove = e => {
     const r = fc.getBoundingClientRect();
     const x = (e.clientX - r.left) * (1011 / r.width);
     const y = (e.clientY - r.top) * (638 / r.height);
-    
-    if(mode === "move") { 
-        drag.x = x - ox; drag.y = y - oy; 
-    } else if(mode === "resize") { 
-        // Aspect Ratio Lock (Photoshop Style - No face stretching)
+    if(mode === "move") { drag.x = x - ox; drag.y = y - oy; } 
+    else if(mode === "resize") { 
         let newW = Math.max(80, x - drag.x);
-        drag.w = newW;
-        drag.h = newW / aspect; 
+        drag.w = newW; drag.h = newW / aspect; 
     }
     draw();
 };
