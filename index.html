@@ -2,74 +2,79 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>OIH ID Card Designer – Clean Print Version</title>
+<title>OIH ID Designer – v83.5</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
 <style>
-:root {
-  --bg1: #0b1020;
-  --bg2: #0f172a;
-  --gold: #c9a035;
-  --stroke: rgba(255,255,255,.12);
+:root { 
+    --gold: #c9a035; 
+    --bg-dark: #000000;
+    --panel-bg: rgba(20, 20, 20, 0.95);
+    --input-fill: #e0f2fe; 
+    --danger: #ef4444;
 }
-* { box-sizing: border-box; touch-action: none; } 
 
-body {
-  margin: 0; font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, var(--bg1), var(--bg2));
-  color: #fff; min-height: 100vh;
-}
-.wrap {
-  max-width: 1200px; margin: auto; padding: 20px;
-  display: grid; grid-template-columns: 380px 1fr; gap: 20px;
-}
+body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: #fff; overflow-x: hidden; touch-action: none; }
+.wrap { max-width: 1240px; margin: auto; padding: 20px; display: grid; grid-template-columns: 350px 1fr; gap: 25px; }
+
 .panel {
-  background: rgba(255,255,255,.04); border: 1px solid var(--stroke);
-  border-radius: 20px; padding: 20px; height: fit-content;
-  position: sticky; top: 20px;
+  background: var(--panel-bg); border-radius: 20px; padding: 25px; height: fit-content;
+  position: sticky; top: 20px; border: 1px solid rgba(255,255,255,0.1);
 }
-h1 { margin: 0 0 10px; font-size: 20px; color: var(--gold); }
-label { font-size: 12px; font-weight: 700; opacity: .8; margin-top: 12px; display: block; }
-input {
-  width: 100%; padding: 10px; border-radius: 10px;
-  background: rgba(0,0,0,.3); color: #fff; border: 1px solid var(--stroke);
+
+.header-area { cursor: pointer; user-select: none; margin-bottom: 20px; text-align: center; }
+.ui-logo { width: 100%; max-height: 80px; object-fit: contain; margin-bottom: 10px; display: block; }
+h1 { font-size: 18px; color: var(--gold); margin: 0; letter-spacing: 1px; font-weight: 800; }
+.sub-tag { font-size: 9px; opacity: 0.5; display: block; letter-spacing: 2px; }
+
+label { font-size: 10px; font-weight: 800; margin-top: 15px; display: block; text-transform: uppercase; }
+
+/* Custom File Upload Styling */
+.file-box {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--input-fill); color: #000; border: 2px solid var(--gold);
+    border-radius: 8px; margin-top: 5px; padding: 8px 12px; font-weight: 700; font-size: 13px;
+    cursor: pointer; overflow: hidden;
 }
-.lock-btn {
-  width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px;
-  background: #1f2937; color: #fff; border: none; cursor: pointer; font-weight: 700;
+.file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.inline-clear { 
+    color: var(--danger); font-size: 18px; margin-left: 10px; cursor: pointer; 
+    padding: 0 5px; display: none; /* Only shows when file exists */
 }
+
+input[type="text"] {
+  width: 100%; padding: 10px; border-radius: 8px; margin-top: 5px; box-sizing: border-box;
+  background: var(--input-fill); color: #000; border: 2px solid var(--gold); font-weight: 700;
+}
+
 .ai-btn {
   width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px;
   background: #6366f1; color: #fff; border: none; cursor: pointer; font-weight: 700;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
-.ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-canvas {
-  width: 100%; background: #fff; border-radius: 14px;
-  box-shadow: 0 10px 40px rgba(0,0,0,.5); cursor: move;
+.action-row { display: flex; gap: 10px; margin-top: 20px; }
+.icon-btn {
+  flex: 1; height: 45px; border-radius: 10px; border: none; 
+  cursor: pointer; display: flex; align-items: center; justify-content: center; 
+  font-size: 20px; transition: 0.2s;
+}
+.save-btn { background: #10b981; color: white; }
+.print-btn { background: #3b82f6; color: white; }
+.lock-btn { background: #374151; color: white; border: 1px solid rgba(255,255,255,0.1); display: none; }
+.lock-btn.unlocked { background: var(--gold); }
+
+canvas { 
+    width: 100%; max-width: 1011px; height: auto; 
+    border-radius: 14px; background: #1a1a1a; 
+    display: block; border: 1px solid #333; margin-bottom: 20px;
 }
 
 @media print {
     @page { margin: 0; size: auto; }
-    body { background: #fff !important; }
-    .panel { display: none !important; } 
-    .wrap { display: block !important; padding: 0 !important; margin: 0 !important; }
-    .card-wrapper {
-        height: 100vh;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        page-break-after: always;
-    }
-    canvas {
-        width: 86mm !important;
-        height: 54mm !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
+    body { background: white !important; }
+    .panel { display: none !important; }
+    .wrap { display: block; padding: 0; margin: 0; }
+    canvas { border: none !important; margin: 0 !important; page-break-after: always; width: 100% !important; }
 }
 </style>
 </head>
@@ -77,167 +82,278 @@ canvas {
 
 <div class="wrap">
   <div class="panel">
-    <h1>OIH ID Designer</h1>
+    <div class="header-area" ondblclick="revealLock()">
+        <img src="ui_logo.png" class="ui-logo" alt="OIH Logo">
+        <h1>OIH DESIGNER</h1>
+        <span class="sub-tag">PREMIUM ID SUITE</span>
+    </div>
+
+    <label>Photo</label>
+    <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="loadPhoto(event)">
+    <div class="file-box" onclick="document.getElementById('photoInput').click()">
+        <span class="file-name" id="displayFileName">Choose Photo...</span>
+        <span class="inline-clear" id="clearBtn" onclick="clearPhotoManual(event)">✕</span>
+    </div>
+
+    <button class="ai-btn" onclick="removeBackgroundAI()">✨ Remove BG</button>
     
-    <label>1. Employee Photo</label>
-    <input type="file" accept="image/*" onchange="loadPhoto(event)">
-    <button class="ai-btn" id="aiBtn" onclick="removeBackgroundAI()">✨ Remove Background (AI)</button>
+    <label>Full Name</label>
+    <input type="text" id="fullname" placeholder="Name" oninput="handleNameInput(this)">
+    <label>Title</label>
+    <input type="text" id="dg" placeholder="Designation" oninput="draw()">
+    <label>ID Number</label>
+    <input type="text" id="idn" placeholder="ID Number" oninput="draw()">
 
-    <label>2. Full Name</label>
-    <input id="fullname" placeholder="Type name..." oninput="draw()">
-
-    <label>3. Designation</label>
-    <input id="dg" placeholder="Type title..." oninput="draw()">
-
-    <label>4. ID Number</label>
-    <input id="idn" placeholder="Type ID..." oninput="draw()">
-
-    <button class="lock-btn" id="lockBtn" onclick="toggleOverlayLock()">🔒 Overlay Locked</button>
-    
-    <div style="margin-top:25px; padding:15px; background:rgba(201,160,53,0.1); border-radius:10px; border: 1px solid rgba(201,160,53,0.3)">
-        <p style="font-size: 11px; margin:0; color: #e2c36a; line-height:1.5">
-            <strong>PRINTING GUIDE:</strong><br>
-            1. Press <b>Ctrl + P</b>.<br>
-            2. <b>Margins:</b> None.<br>
-            3. <b>Background Graphics:</b> ON.
-        </p>
+    <div class="action-row">
+        <button class="icon-btn save-btn" onclick="saveAsPNG()" title="Save PNG">💾</button>
+        <button class="icon-btn print-btn" onclick="window.print()" title="Print">🖨️</button>
+        <button class="icon-btn lock-btn" id="lockBtn" onclick="toggleLock()">
+            <span id="lockIcon">🔒</span>
+        </button>
     </div>
   </div>
 
   <div id="print-area">
-    <div class="card-wrapper"><canvas id="fc"></canvas></div>
-    <div class="card-wrapper" style="margin-top: 20px;"><canvas id="bc"></canvas></div>
+    <canvas id="fc"></canvas>
+    <canvas id="bc"></canvas>
   </div>
 </div>
 
 <script>
-const fc = document.getElementById("fc"), 
-      bc = document.getElementById("bc"),
-      fn = document.getElementById("fullname"), 
-      dg = document.getElementById("dg"), 
-      idn = document.getElementById("idn");
+const fc = document.getElementById("fc"), bc = document.getElementById("bc"),
+      fn = document.getElementById("fullname"), dg = document.getElementById("dg"), idn = document.getElementById("idn"),
+      fileText = document.getElementById("displayFileName"), clearBtn = document.getElementById("clearBtn");
 
-fc.width = bc.width = 1011; 
-fc.height = bc.height = 638;
-
+fc.width = bc.width = 1011; fc.height = bc.height = 638;
 const fctx = fc.getContext("2d"), bctx = bc.getContext("2d");
-const LEFT_MARGIN = 70;
-const SECURE_KEY = "qTFEG8utmvdapiXgqb2fN3gt";
+
+const CONFIG = {
+    bleed: { offset: -24, extraW: 48, extraH: 40 },
+    overlay: { x: 440, y: 40, widthScale: 1.10 }
+};
 
 let imgs = { front: new Image(), overlay: new Image(), back: new Image(), photo: null };
-let overlayLocked = true;
-let photo = { x: 550, y: 70, w: 400, h: 500 };
-let overlay = { x: 520, y: -30, w: 0, h: 0 };
-let drag = null, mode = null, ox = 0, oy = 0, aspect = 1;
-let rawPhotoFile = null;
+let isLocked = true, isInteracting = false, photoRatio = 1;
+
+let frontPos = { x: CONFIG.bleed.offset, y: CONFIG.bleed.offset, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
+let photoPos = { x: 550, y: 70, w: 400, h: 500 };
+let overlayPos = { x: CONFIG.overlay.x, y: CONFIG.overlay.y, w: 0, h: 638 };
+let backPos = { x: CONFIG.bleed.offset, y: CONFIG.bleed.offset, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
 
 imgs.front.src = "./front_base.png";
 imgs.overlay.src = "./gold_overlay.png";
 imgs.back.src = "./back_base.png";
 
 imgs.overlay.onload = () => {
-    overlay.w = imgs.overlay.width * 1.5;
-    overlay.h = imgs.overlay.height * 1.5;
+    const scaleFactor = 638 / imgs.overlay.height; 
+    overlayPos.w = (imgs.overlay.width * scaleFactor) * CONFIG.overlay.widthScale;
     draw();
 };
 imgs.front.onload = imgs.back.onload = draw;
 
-function toggleOverlayLock() {
-    overlayLocked = !overlayLocked;
-    document.getElementById("lockBtn").innerText = overlayLocked ? "🔒 Overlay Locked" : "🔓 Overlay Unlocked";
+function clearPhotoManual(e) {
+    e.stopPropagation(); // Prevents re-opening file dialog
+    imgs.photo = null;
+    document.getElementById('photoInput').value = "";
+    fileText.innerText = "Choose Photo...";
+    clearBtn.style.display = "none";
+    draw();
 }
 
 function loadPhoto(e) {
-    rawPhotoFile = e.target.files[0];
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    // Update Display
+    fileText.innerText = file.name;
+    clearBtn.style.display = "block";
+
     const r = new FileReader();
     r.onload = ev => {
         const i = new Image();
         i.onload = () => { 
             imgs.photo = i; 
-            aspect = i.width / i.height; 
-            photo.h = photo.w / aspect; 
+            photoRatio = i.width / i.height;
+            photoPos.h = photoPos.w / photoRatio; 
             draw(); 
         };
         i.src = ev.target.result;
     };
-    r.readAsDataURL(e.target.files[0]);
+    r.readAsDataURL(file);
 }
 
-async function removeBackgroundAI() {
-    if (!rawPhotoFile) return alert("Upload photo first!");
-    const btn = document.getElementById('aiBtn');
-    btn.innerText = "⏳ Processing..."; btn.disabled = true;
-    const fd = new FormData(); fd.append('image_file', rawPhotoFile); fd.append('size', 'auto');
-    try {
-        const res = await fetch('https://api.remove.bg/v1.0/removebg', {
-            method: 'POST', headers: { 'X-Api-Key': SECURE_KEY }, body: fd
-        });
-        if (res.ok) {
-            const blob = await res.blob();
-            const i = new Image();
-            i.onload = () => { 
-                imgs.photo = i; aspect = i.width / i.height;
-                photo.h = photo.w / aspect; draw(); 
-                btn.innerText = "✅ Done!"; btn.disabled = false; 
-            };
-            i.src = URL.createObjectURL(blob);
+function handleNameInput(el) {
+    let words = el.value.split(" ");
+    for (let i = 0; i < words.length; i++) {
+        if (words[i].length > 0) {
+            words[i] = words[i][0].toUpperCase() + words[i].substr(1).toLowerCase();
         }
-    } catch (e) { alert("AI Error"); btn.disabled = false; }
+    }
+    el.value = words.join(" ");
+    draw();
 }
 
-function drawAutoText(text, x, y, maxW, maxS, weight) {
-    let s = maxS; fctx.fillStyle = "#000";
-    do { fctx.font = `${weight} ${s}px 'Inter'`; s--; } 
-    while(fctx.measureText(text).width > maxW && s > 24);
-    fctx.fillText(text, x, y);
+function revealLock() {
+    const btn = document.getElementById("lockBtn");
+    btn.style.display = (btn.style.display === "flex") ? "none" : "flex";
+}
+
+function toggleLock() {
+    isLocked = !isLocked;
+    document.getElementById("lockBtn").classList.toggle("unlocked", !isLocked);
+    document.getElementById("lockIcon").innerText = isLocked ? "🔒" : "🔓";
+    draw(); 
+}
+
+function fillTextSmart(ctx, text, x, y, maxW, baseSize, weight) {
+    let size = baseSize;
+    ctx.font = `${weight} ${size}px Inter`;
+    while (ctx.measureText(text).width > maxW && size > 10) {
+        size--;
+        ctx.font = `${weight} ${size}px Inter`;
+    }
+    ctx.fillText(text, x, y);
 }
 
 function draw() {
-    // FRONT
     fctx.clearRect(0, 0, 1011, 638);
-    if(imgs.front.complete) fctx.drawImage(imgs.front, 0, 0, 1011, 638);
-    if(imgs.photo) {
-        fctx.drawImage(imgs.photo, photo.x, photo.y, photo.w, photo.h);
-        fctx.fillStyle = "rgba(201, 160, 53, 0.9)"; fctx.beginPath();
-        fctx.arc(photo.x + photo.w, photo.y + photo.h, 15, 0, Math.PI * 2); fctx.fill();
-    }
-    if(imgs.overlay.complete) fctx.drawImage(imgs.overlay, overlay.x, overlay.y, overlay.w, overlay.h);
-    if(fn.value.trim() !== "") drawAutoText(fn.value, LEFT_MARGIN, 465, 460, 46, 800);
-    if(dg.value.trim() !== "") drawAutoText(dg.value, LEFT_MARGIN, 525, 420, 34, 700);
-    if(idn.value.trim() !== "") drawAutoText("ID No - " + idn.value, LEFT_MARGIN, 580, 420, 30, 700);
+    if(imgs.front.complete) fctx.drawImage(imgs.front, frontPos.x, frontPos.y, frontPos.w, frontPos.h);
+    if(imgs.photo) fctx.drawImage(imgs.photo, photoPos.x, photoPos.y, photoPos.w, photoPos.h);
+    if(imgs.overlay.complete) fctx.drawImage(imgs.overlay, overlayPos.x, overlayPos.y, overlayPos.w, overlayPos.h);
+    
+    fctx.fillStyle = "#000";
+    if(fn.value) fillTextSmart(fctx, fn.value, 70, 465, 450, 46, "800");
+    if(dg.value) fillTextSmart(fctx, dg.value, 70, 525, 450, 34, "700");
+    if(idn.value) fillTextSmart(fctx, "ID No - " + idn.value, 70, 580, 450, 30, "700");
 
-    // BACK SIDE - Refined 1mm zoom (12px offset)
-    bctx.clearRect(0, 0, 1011, 638);
-    if(imgs.back.complete) {
-        bctx.drawImage(imgs.back, -12, -12, 1035, 662);
+    if(isInteracting) {
+        if(imgs.photo) drawHandles(fctx, photoPos, "rgba(201, 160, 53, 0.7)");
+        if(!isLocked) drawHandles(fctx, overlayPos, "rgba(201, 160, 53, 0.8)");
     }
+
+    bctx.clearRect(0, 0, 1011, 638);
+    if(imgs.back.complete) bctx.drawImage(imgs.back, backPos.x, backPos.y, backPos.w, backPos.h);
 }
 
-// INTERACTION
-fc.onpointerdown = e => {
-    const r = fc.getBoundingClientRect();
-    const x = (e.clientX - r.left) * (1011 / r.width);
-    const y = (e.clientY - r.top) * (638 / r.height);
-    if(imgs.photo && Math.hypot(x - (photo.x + photo.w), y - (photo.y + photo.h)) < 35) { drag = photo; mode = "resize"; return; }
-    if(!overlayLocked && x > overlay.x && x < overlay.x + overlay.w && y > overlay.y && y < overlay.y + overlay.h) { drag = overlay; mode = "move"; ox = x - overlay.x; oy = y - overlay.y; return; }
-    if(imgs.photo && x > photo.x && x < photo.x + photo.w && y > photo.y && y < photo.y + photo.h) { drag = photo; mode = "move"; ox = x - photo.x; oy = y - photo.y; }
+function drawHandles(ctx, obj, color) {
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.fillRect(obj.x + obj.w - 22, obj.y + obj.h - 22, 22, 22);
+}
+
+let action = null, target = null, start = {x:0, y:0, w:0, h:0}, activeCanvas = null;
+
+const getPos = (e, canvas) => {
+    const r = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - r.left) * (1011 / r.width), y: (clientY - r.top) * (638 / r.height) };
 };
 
-window.onpointermove = e => {
-    if(!drag) return;
-    const r = fc.getBoundingClientRect();
-    const x = (e.clientX - r.left) * (1011 / r.width);
-    const y = (e.clientY - r.top) * (638 / r.height);
-    if(mode === "move") { drag.x = x - ox; drag.y = y - oy; } 
-    else if(mode === "resize") { 
-        let newW = Math.max(80, x - drag.x);
-        drag.w = newW; drag.h = newW / aspect; 
+const initDrag = (e, canvas, isFront) => {
+    isInteracting = true;
+    activeCanvas = canvas;
+    const p = getPos(e, canvas);
+    const check = (obj, canAdjust) => {
+        if(!canAdjust) return null;
+        if(p.x > obj.x + obj.w - 60 && p.x < obj.x + obj.w + 20 && p.y > obj.y + obj.h - 60 && p.y < obj.y + obj.h + 20) return "resize";
+        if(p.x > obj.x && p.x < obj.x + obj.w && p.y > obj.y && p.y < obj.y + obj.h) return "move";
+        return null;
+    };
+
+    if(isFront) {
+        let res = check(photoPos, true); 
+        if(res) { target = photoPos; action = res; }
+        else {
+            res = check(overlayPos, !isLocked); 
+            if(res) { target = overlayPos; action = res; }
+            else if(!isLocked) { target = frontPos; action = "move"; }
+        }
+    } else if(!isLocked) {
+        target = backPos; action = "move";
     }
+    if(target) start = { x: p.x - target.x, y: p.y - target.y, w: target.w, h: target.h, px: p.x, py: p.y };
     draw();
 };
 
-window.onpointerup = () => { drag = null; mode = null; };
-</script>
+window.addEventListener('mousemove', (e) => {
+    if(!target || !activeCanvas) return;
+    const p = getPos(e, activeCanvas);
+    if(action === "move") {
+        target.x = p.x - start.x; target.y = p.y - start.y;
+    } else if(action === "resize") {
+        let newW = Math.max(50, start.w + (p.x - start.px));
+        target.w = newW;
+        if(target === photoPos) target.h = newW / photoRatio;
+        else target.h = Math.max(50, start.h + (p.y - start.py));
+    }
+    draw();
+});
 
+window.addEventListener('touchmove', (e) => {
+    if(!target || !activeCanvas) return;
+    e.preventDefault(); 
+    const p = getPos(e, activeCanvas);
+    if(action === "move") {
+        target.x = p.x - start.x; target.y = p.y - start.y;
+    } else if(action === "resize") {
+        let newW = Math.max(50, start.w + (p.x - start.px));
+        target.w = newW;
+        if(target === photoPos) target.h = newW / photoRatio;
+        else target.h = Math.max(50, start.h + (p.y - start.py));
+    }
+    draw();
+}, {passive:false});
+
+window.addEventListener('mouseup', () => { 
+    isInteracting = false; 
+    target = null; action = null; activeCanvas = null; 
+    draw(); 
+});
+window.addEventListener('touchend', () => { 
+    isInteracting = false; 
+    target = null; action = null; activeCanvas = null; 
+    draw(); 
+});
+
+fc.addEventListener('mousedown', e => initDrag(e, fc, true));
+fc.addEventListener('touchstart', e => { e.preventDefault(); initDrag(e, fc, true); }, {passive:false});
+bc.addEventListener('mousedown', e => initDrag(e, bc, false));
+bc.addEventListener('touchstart', e => { e.preventDefault(); initDrag(e, bc, false); }, {passive:false});
+
+async function removeBackgroundAI() {
+    const file = document.getElementById('photoInput').files[0];
+    if(!file) return;
+    const fd = new FormData(); fd.append('image_file', file);
+    const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+        method: 'POST', headers: { 'X-Api-Key': "qTFEG8utmvdapiXgqb2fN3gt" }, body: fd
+    });
+    if(res.ok) {
+        const b = await res.blob();
+        const i = new Image(); i.onload = () => { 
+            imgs.photo = i; 
+            photoRatio = i.width / i.height;
+            draw(); 
+        };
+        i.src = URL.createObjectURL(b);
+    }
+}
+
+function saveAsPNG() {
+    isInteracting = false;
+    draw();
+    const name = (fn.value || "ID").trim().replace(/\s+/g, '_');
+    [fc, bc].forEach((c, i) => {
+        const link = document.createElement('a');
+        link.download = `${name}_${i===0?'Front':'Back'}.png`;
+        link.href = c.toDataURL("image/png");
+        link.click();
+    });
+}
+</script>
 </body>
 </html>
