@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OIH ID Card Designer – Clean Print Version</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg1: #0b1020;
+  --bg2: #0f172a;
+  --gold: #c9a035;
+  --stroke: rgba(255,255,255,.12);
+}
+* { box-sizing: border-box; }
+
+/* UI STYLES */
+body {
+  margin: 0; font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  color: #fff; min-height: 100vh;
+}
+.wrap {
+  max-width: 1200px; margin: auto; padding: 20px;
+  display: grid; grid-template-columns: 380px 1fr; gap: 20px;
+}
+.panel {
+  background: rgba(255,255,255,.04); border: 1px solid var(--stroke);
+  border-radius: 20px; padding: 20px; height: fit-content;
+  position: sticky; top: 20px;
+}
+h1 { margin: 0 0 10px; font-size: 20px; color: var(--gold); }
+label { font-size: 12px; font-weight: 700; opacity: .8; margin-top: 12px; display: block; }
+input {
+  width: 100%; padding: 10px; border-radius: 10px;
+  background: rgba(0,0,0,.3); color: #fff; border: 1px solid var(--stroke);
+}
+.lock-btn {
+  width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px;
+  background: #1f2937; color: #fff; border: none; cursor: pointer; font-weight: 700;
+}
+/* AI BUTTON STYLE */
+.ai-btn {
+  width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px;
+  background: #6366f1; color: #fff; border: none; cursor: pointer; font-weight: 700;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+.ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+canvas {
+  width: 100%; background: #fff; border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.5); cursor: move;
+}
+
+/* PRINT ENGINE (Ctrl + P) */
+@media print {
+    @page { margin: 0; size: auto; }
+    body { background: #fff !important; }
+    .panel { display: none !important; } 
+    .wrap { display: block !important; padding: 0 !important; margin: 0 !important; }
+    
+    .card-wrapper {
+        height: 100vh;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        page-break-after: always;
+    }
+
+    canvas {
+        width: 86mm !important;
+        height: 54mm !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+  <div class="panel">
+    <h1>OIH ID Designer</h1>
+    
+    <label>1. Employee Photo</label>
+    <input type="file" accept="image/*" onchange="loadPhoto(event)">
+    
+    <button class="ai-btn" id="aiBtn" onclick="removeBackgroundAI()">✨ Remove Background (AI)</button>
+
+    <label>2. Full Name</label>
+    <input id="fullname" placeholder="Type name..." oninput="draw()">
+
+    <label>3. Designation</label>
+    <input id="dg" placeholder="Type title..." oninput="draw()">
+
+    <label>4. ID Number</label>
+    <input id="idn" placeholder="Type ID..." oninput="draw()">
+
+    <button class="lock-btn" id="lockBtn" onclick="toggleOverlayLock()">🔒 Overlay Locked</button>
+    
+    <div style="margin-top:25px; padding:15px; background:rgba(201,160,53,0.1); border-radius:10px; border: 1px solid rgba(201,160,53,0.3)">
+        <p style="font-size: 11px; margin:0; color: #e2c36a; line-height:1.5">
+            <strong>PRINTING GUIDE:</strong><br>
+            1. Press <b>Ctrl + P</b> on your keyboard.<br>
+            2. Set <b>Margins</b> to <b>None</b>.<br>
+            3. Turn <b>Background Graphics</b> to <b>ON</b>.
+        </p>
+    </div>
+  </div>
+
+  <div id="print-area">
+    <div class="card-wrapper">
+        <canvas id="fc"></canvas>
+    </div>
+    <div class="card-wrapper" style="margin-top: 20px;">
+        <canvas id="bc"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+const fc = document.getElementById("fc"), 
+      bc = document.getElementById("bc"),
+      fn = document.getElementById("fullname"), 
+      dg = document.getElementById("dg"), 
+      idn = document.getElementById("idn");
+
+fc.width = bc.width = 1011; 
+fc.height = bc.height = 638;
+
+const fctx = fc.getContext("2d"), bctx = bc.getContext("2d");
+const LEFT_MARGIN = 70;
+const SECURE_KEY = "qTFEG8utmvdapiXgqb2fN3gt"; // Your API Key
+
+let imgs = { front: new Image(), overlay: new Image(), back: new Image(), photo: null };
+let overlayLocked = true;
+let photo = { x: 550, y: 70, w: 400, h: 500 };
+let overlay = { x: 520, y: -30, w: 0, h: 0 };
+let drag = null, mode = null, ox = 0, oy = 0;
+let rawPhotoFile = null;
+
+imgs.front.src = "./front_base.png";
+imgs.overlay.src = "./gold_overlay.png";
+imgs.back.src = "./back_base.png";
+
+imgs.overlay.onload = () => {
+    overlay.w = imgs.overlay.width * 1.5;
+    overlay.h = imgs.overlay.height * 1.5;
+    draw();
+};
+imgs.front.onload = imgs.back.onload = draw;
+
+function toggleOverlayLock() {
+    overlayLocked = !overlayLocked;
+    document.getElementById("lockBtn").innerText = overlayLocked ? "🔒 Overlay Locked" : "🔓 Overlay Unlocked";
+}
+
+function loadPhoto(e) {
+    rawPhotoFile = e.target.files[0];
+    const r = new FileReader();
+    r.onload = ev => {
+        const i = new Image();
+        i.onload = () => { imgs.photo = i; draw(); };
+        i.src = ev.target.result;
+    };
+    r.readAsDataURL(e.target.files[0]);
+}
+
+async function removeBackgroundAI() {
+    if (!rawPhotoFile) return alert("Please upload a photo first!");
+    const btn = document.getElementById('aiBtn');
+    btn.innerText = "⏳ Processing...";
+    btn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('image_file', rawPhotoFile);
+    formData.append('size', 'auto');
+
+    try {
+        const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+            method: 'POST',
+            headers: { 'X-Api-Key': SECURE_KEY },
+            body: formData
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const i = new Image();
+            i.onload = () => { imgs.photo = i; draw(); btn.innerText = "✅ Done!"; btn.disabled = false; };
+            i.src = url;
+        } else {
+            alert("AI Error. Check API Key or Credits.");
+            btn.innerText = "✨ Remove Background (AI)";
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert("Connection Error.");
+        btn.disabled = false;
+    }
+}
+
+function drawAutoText(text, x, y, maxW, maxS, weight) {
+    let s = maxS;
+    fctx.fillStyle = "#000";
+    do {
+        fctx.font = `${weight} ${s}px 'Inter'`;
+        s--;
+    } while(fctx.measureText(text).width > maxW && s > 24);
+    fctx.fillText(text, x, y);
+}
+
+function draw() {
+    fctx.clearRect(0, 0, 1011, 638);
+    if(imgs.front.complete) fctx.drawImage(imgs.front, 0, 0, 1011, 638);
+    if(imgs.photo) {
+        fctx.drawImage(imgs.photo, photo.x, photo.y, photo.w, photo.h);
+        fctx.fillStyle = "rgba(201, 160, 53, 0.8)";
+        fctx.fillRect(photo.x + photo.w - 15, photo.y + photo.h - 15, 15, 15);
+    }
+    if(imgs.overlay.complete) fctx.drawImage(imgs.overlay, overlay.x, overlay.y, overlay.w, overlay.h);
+    
+    if(fn.value.trim() !== "") drawAutoText(fn.value, LEFT_MARGIN, 465, 460, 46, 800);
+    if(dg.value.trim() !== "") drawAutoText(dg.value, LEFT_MARGIN, 525, 420, 34, 700);
+    if(idn.value.trim() !== "") drawAutoText("ID No - " + idn.value, LEFT_MARGIN, 580, 420, 30, 700);
+
+    bctx.clearRect(0, 0, 1011, 638);
+    if(imgs.back.complete) bctx.drawImage(imgs.back, 0, 0, 1011, 638);
+}
+
+fc.onmousedown = e => {
+    const r = fc.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (1011 / r.width);
+    const y = (e.clientY - r.top) * (638 / r.height);
+    if(imgs.photo && x > photo.x + photo.w - 25 && y > photo.y + photo.h - 25) { drag = photo; mode = "resize"; return; }
+    if(!overlayLocked && x > overlay.x && x < overlay.x + overlay.w && y > overlay.y && y < overlay.y + overlay.h) { drag = overlay; mode = "move"; ox = x - overlay.x; oy = y - overlay.y; return; }
+    if(imgs.photo && x > photo.x && x < photo.x + photo.w && y > photo.y && y < photo.y + photo.h) { drag = photo; mode = "move"; ox = x - photo.x; oy = y - photo.y; }
+};
+
+window.onmousemove = e => {
+    if(!drag) return;
+    const r = fc.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (1011 / r.width);
+    const y = (e.clientY - r.top) * (638 / r.height);
+    if(mode === "move") { drag.x = x - ox; drag.y = y - oy; } 
+    else if(mode === "resize") { photo.w = Math.max(80, x - photo.x); photo.h = Math.max(100, y - photo.y); }
+    draw();
+};
+window.onmouseup = () => { drag = null; mode = null; };
+</script>
+
+</body>
+</html>
