@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>OIH ID Designer – v83.9</title>
+<title>OIH ID Designer – v84.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
 <style>
@@ -83,7 +83,7 @@ canvas {
   <div class="panel">
     <div class="header-area" ondblclick="revealLock()">
         <img src="ui_logo.png" class="ui-logo" alt="OIH Logo">
-        <h1>OIH ID CARD DESIGNER</h1>
+        <h1>OIH DESIGNER</h1>
         <span class="sub-tag">PREMIUM ID SUITE</span>
     </div>
 
@@ -104,8 +104,8 @@ canvas {
     <input type="text" id="idn" placeholder="ID Number" oninput="draw()">
 
     <div class="action-row">
-        <button class="icon-btn save-btn" onclick="saveAsPNG()">💾</button>
-        <button class="icon-btn print-btn" onclick="window.print()">🖨️</button>
+        <button class="icon-btn save-btn" title="Save Front PNG" onclick="saveAsPNG()">💾</button>
+        <button class="icon-btn print-btn" title="Print Both Sides" onclick="window.print()">🖨️</button>
         <button class="icon-btn lock-btn" id="lockBtn" onclick="toggleLock()">
             <span id="lockIcon">🔒</span>
         </button>
@@ -130,18 +130,17 @@ const CONFIG = {
     bleed: { 
         xOff: -24, 
         yOffFront: -24, 
-        yOffBack: 0, // 2mm downward shift for backside
+        yOffBack: 0, 
         extraW: 48, 
         extraH: 40 
     },
     overlay: { x: 440, y: 40, widthScale: 1.10 },
-    textX: 82 // 1mm right shift for text (Original was 70)
+    textX: 82 
 };
 
 let imgs = { front: new Image(), overlay: new Image(), back: new Image(), photo: null };
 let isLocked = true, isInteracting = false, photoRatio = 1;
 
-// Positioning Logic
 let frontPos = { x: CONFIG.bleed.xOff, y: CONFIG.bleed.yOffFront, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
 let photoPos = { x: 550, y: 70, w: 400, h: 500 };
 let overlayPos = { x: CONFIG.overlay.x, y: CONFIG.overlay.y, w: 0, h: 638 };
@@ -226,7 +225,6 @@ function draw() {
     if(imgs.overlay.complete) fctx.drawImage(imgs.overlay, overlayPos.x, overlayPos.y, overlayPos.w, overlayPos.h);
     
     fctx.fillStyle = "#000";
-    // Using CONFIG.textX for the 1mm right shift
     if(fn.value) fillTextSmart(fctx, fn.value, CONFIG.textX, 465, 450, 46, "800");
     if(dg.value) fillTextSmart(fctx, dg.value, CONFIG.textX, 525, 450, 34, "700");
     if(idn.value) fillTextSmart(fctx, "ID No - " + idn.value, CONFIG.textX, 580, 450, 30, "700");
@@ -342,6 +340,7 @@ async function removeBackgroundAI() {
         const i = new Image(); i.onload = () => { 
             imgs.photo = i; 
             photoRatio = i.width / i.height;
+            photoPos.h = photoPos.w / photoRatio;
             draw(); 
         };
         i.src = URL.createObjectURL(b);
@@ -351,13 +350,24 @@ async function removeBackgroundAI() {
 function saveAsPNG() {
     isInteracting = false;
     draw();
-    const name = (fn.value || "ID").trim().replace(/\s+/g, '_');
-    [fc, bc].forEach((c, i) => {
-        const link = document.createElement('a');
-        link.download = `${name}_${i===0?'Front':'Back'}.png`;
-        link.href = c.toDataURL("image/png");
-        link.click();
-    });
+    
+    const nameStr = fn.value.trim();
+    const idStr = idn.value.trim();
+    let fileNameBase = "ID";
+    
+    // Logic: Name_ID if ID exists, else Name only
+    if (idStr !== "") {
+        fileNameBase = `${nameStr}_${idStr}`;
+    } else if (nameStr !== "") {
+        fileNameBase = nameStr;
+    }
+
+    const safeBase = fileNameBase.replace(/\s+/g, '_');
+    
+    const link = document.createElement('a');
+    link.download = `${safeBase}_Front.png`;
+    link.href = fc.toDataURL("image/png");
+    link.click();
 }
 </script>
 </body>
