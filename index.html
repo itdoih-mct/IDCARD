@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>OIH ID Designer – v83.5</title>
+<title>OIH ID Designer – v83.9</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
 <style>
@@ -29,7 +29,6 @@ h1 { font-size: 18px; color: var(--gold); margin: 0; letter-spacing: 1px; font-w
 
 label { font-size: 10px; font-weight: 800; margin-top: 15px; display: block; text-transform: uppercase; }
 
-/* Custom File Upload Styling */
 .file-box {
     display: flex; align-items: center; justify-content: space-between;
     background: var(--input-fill); color: #000; border: 2px solid var(--gold);
@@ -39,7 +38,7 @@ label { font-size: 10px; font-weight: 800; margin-top: 15px; display: block; tex
 .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .inline-clear { 
     color: var(--danger); font-size: 18px; margin-left: 10px; cursor: pointer; 
-    padding: 0 5px; display: none; /* Only shows when file exists */
+    padding: 0 5px; display: none; 
 }
 
 input[type="text"] {
@@ -105,8 +104,8 @@ canvas {
     <input type="text" id="idn" placeholder="ID Number" oninput="draw()">
 
     <div class="action-row">
-        <button class="icon-btn save-btn" onclick="saveAsPNG()" title="Save PNG">💾</button>
-        <button class="icon-btn print-btn" onclick="window.print()" title="Print">🖨️</button>
+        <button class="icon-btn save-btn" onclick="saveAsPNG()">💾</button>
+        <button class="icon-btn print-btn" onclick="window.print()">🖨️</button>
         <button class="icon-btn lock-btn" id="lockBtn" onclick="toggleLock()">
             <span id="lockIcon">🔒</span>
         </button>
@@ -128,17 +127,25 @@ fc.width = bc.width = 1011; fc.height = bc.height = 638;
 const fctx = fc.getContext("2d"), bctx = bc.getContext("2d");
 
 const CONFIG = {
-    bleed: { offset: -24, extraW: 48, extraH: 40 },
-    overlay: { x: 440, y: 40, widthScale: 1.10 }
+    bleed: { 
+        xOff: -24, 
+        yOffFront: -24, 
+        yOffBack: 0, // 2mm downward shift for backside
+        extraW: 48, 
+        extraH: 40 
+    },
+    overlay: { x: 440, y: 40, widthScale: 1.10 },
+    textX: 82 // 1mm right shift for text (Original was 70)
 };
 
 let imgs = { front: new Image(), overlay: new Image(), back: new Image(), photo: null };
 let isLocked = true, isInteracting = false, photoRatio = 1;
 
-let frontPos = { x: CONFIG.bleed.offset, y: CONFIG.bleed.offset, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
+// Positioning Logic
+let frontPos = { x: CONFIG.bleed.xOff, y: CONFIG.bleed.yOffFront, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
 let photoPos = { x: 550, y: 70, w: 400, h: 500 };
 let overlayPos = { x: CONFIG.overlay.x, y: CONFIG.overlay.y, w: 0, h: 638 };
-let backPos = { x: CONFIG.bleed.offset, y: CONFIG.bleed.offset, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
+let backPos = { x: CONFIG.bleed.xOff, y: CONFIG.bleed.yOffBack, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
 
 imgs.front.src = "./front_base.png";
 imgs.overlay.src = "./gold_overlay.png";
@@ -152,7 +159,7 @@ imgs.overlay.onload = () => {
 imgs.front.onload = imgs.back.onload = draw;
 
 function clearPhotoManual(e) {
-    e.stopPropagation(); // Prevents re-opening file dialog
+    e.stopPropagation();
     imgs.photo = null;
     document.getElementById('photoInput').value = "";
     fileText.innerText = "Choose Photo...";
@@ -163,11 +170,8 @@ function clearPhotoManual(e) {
 function loadPhoto(e) {
     const file = e.target.files[0];
     if(!file) return;
-    
-    // Update Display
     fileText.innerText = file.name;
     clearBtn.style.display = "block";
-
     const r = new FileReader();
     r.onload = ev => {
         const i = new Image();
@@ -222,9 +226,10 @@ function draw() {
     if(imgs.overlay.complete) fctx.drawImage(imgs.overlay, overlayPos.x, overlayPos.y, overlayPos.w, overlayPos.h);
     
     fctx.fillStyle = "#000";
-    if(fn.value) fillTextSmart(fctx, fn.value, 70, 465, 450, 46, "800");
-    if(dg.value) fillTextSmart(fctx, dg.value, 70, 525, 450, 34, "700");
-    if(idn.value) fillTextSmart(fctx, "ID No - " + idn.value, 70, 580, 450, 30, "700");
+    // Using CONFIG.textX for the 1mm right shift
+    if(fn.value) fillTextSmart(fctx, fn.value, CONFIG.textX, 465, 450, 46, "800");
+    if(dg.value) fillTextSmart(fctx, dg.value, CONFIG.textX, 525, 450, 34, "700");
+    if(idn.value) fillTextSmart(fctx, "ID No - " + idn.value, CONFIG.textX, 580, 450, 30, "700");
 
     if(isInteracting) {
         if(imgs.photo) drawHandles(fctx, photoPos, "rgba(201, 160, 53, 0.7)");
@@ -249,9 +254,9 @@ let action = null, target = null, start = {x:0, y:0, w:0, h:0}, activeCanvas = n
 
 const getPos = (e, canvas) => {
     const r = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: (clientX - r.left) * (1011 / r.width), y: (clientY - r.top) * (638 / r.height) };
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (cx - r.left) * (1011 / r.width), y: (cy - r.top) * (638 / r.height) };
 };
 
 const initDrag = (e, canvas, isFront) => {
