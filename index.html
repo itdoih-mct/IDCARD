@@ -12,9 +12,8 @@
   --gold: #c9a035;
   --stroke: rgba(255,255,255,.12);
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; touch-action: none; } 
 
-/* UI STYLES */
 body {
   margin: 0; font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, var(--bg1), var(--bg2));
@@ -39,7 +38,6 @@ input {
   width: 100%; margin-top: 15px; padding: 12px; border-radius: 10px;
   background: #1f2937; color: #fff; border: none; cursor: pointer; font-weight: 700;
 }
-/* AI BUTTON STYLE */
 .ai-btn {
   width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px;
   background: #6366f1; color: #fff; border: none; cursor: pointer; font-weight: 700;
@@ -52,13 +50,11 @@ canvas {
   box-shadow: 0 10px 40px rgba(0,0,0,.5); cursor: move;
 }
 
-/* PRINT ENGINE (Ctrl + P) */
 @media print {
     @page { margin: 0; size: auto; }
     body { background: #fff !important; }
     .panel { display: none !important; } 
     .wrap { display: block !important; padding: 0 !important; margin: 0 !important; }
-    
     .card-wrapper {
         height: 100vh;
         display: flex !important;
@@ -66,7 +62,6 @@ canvas {
         justify-content: center;
         page-break-after: always;
     }
-
     canvas {
         width: 86mm !important;
         height: 54mm !important;
@@ -78,7 +73,6 @@ canvas {
 }
 </style>
 </head>
-
 <body>
 
 <div class="wrap">
@@ -87,7 +81,6 @@ canvas {
     
     <label>1. Employee Photo</label>
     <input type="file" accept="image/*" onchange="loadPhoto(event)">
-    
     <button class="ai-btn" id="aiBtn" onclick="removeBackgroundAI()">✨ Remove Background (AI)</button>
 
     <label>2. Full Name</label>
@@ -133,13 +126,13 @@ fc.height = bc.height = 638;
 
 const fctx = fc.getContext("2d"), bctx = bc.getContext("2d");
 const LEFT_MARGIN = 70;
-const SECURE_KEY = "qTFEG8utmvdapiXgqb2fN3gt"; // Your API Key
+const SECURE_KEY = "qTFEG8utmvdapiXgqb2fN3gt";
 
 let imgs = { front: new Image(), overlay: new Image(), back: new Image(), photo: null };
 let overlayLocked = true;
 let photo = { x: 550, y: 70, w: 400, h: 500 };
 let overlay = { x: 520, y: -30, w: 0, h: 0 };
-let drag = null, mode = null, ox = 0, oy = 0;
+let drag = null, mode = null, ox = 0, oy = 0, aspect = 1;
 let rawPhotoFile = null;
 
 imgs.front.src = "./front_base.png";
@@ -163,7 +156,12 @@ function loadPhoto(e) {
     const r = new FileReader();
     r.onload = ev => {
         const i = new Image();
-        i.onload = () => { imgs.photo = i; draw(); };
+        i.onload = () => { 
+            imgs.photo = i; 
+            aspect = i.width / i.height; // Capture original shape
+            photo.h = photo.w / aspect; 
+            draw(); 
+        };
         i.src = ev.target.result;
     };
     r.readAsDataURL(e.target.files[0]);
@@ -190,7 +188,14 @@ async function removeBackgroundAI() {
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const i = new Image();
-            i.onload = () => { imgs.photo = i; draw(); btn.innerText = "✅ Done!"; btn.disabled = false; };
+            i.onload = () => { 
+                imgs.photo = i; 
+                aspect = i.width / i.height;
+                photo.h = photo.w / aspect;
+                draw(); 
+                btn.innerText = "✅ Done!"; 
+                btn.disabled = false; 
+            };
             i.src = url;
         } else {
             alert("AI Error. Check API Key or Credits.");
@@ -218,11 +223,15 @@ function draw() {
     if(imgs.front.complete) fctx.drawImage(imgs.front, 0, 0, 1011, 638);
     if(imgs.photo) {
         fctx.drawImage(imgs.photo, photo.x, photo.y, photo.w, photo.h);
-        fctx.fillStyle = "rgba(201, 160, 53, 0.8)";
-        fctx.fillRect(photo.x + photo.w - 15, photo.y + photo.h - 15, 15, 15);
+        // Larger Gold Resize Handle for fingers
+        fctx.fillStyle = "rgba(201, 160, 53, 0.9)";
+        fctx.beginPath();
+        fctx.arc(photo.x + photo.w, photo.y + photo.h, 15, 0, Math.PI * 2);
+        fctx.fill();
     }
     if(imgs.overlay.complete) fctx.drawImage(imgs.overlay, overlay.x, overlay.y, overlay.w, overlay.h);
     
+    // CORRECTION: Removed .toUpperCase() to allow normal typing
     if(fn.value.trim() !== "") drawAutoText(fn.value, LEFT_MARGIN, 465, 460, 46, 800);
     if(dg.value.trim() !== "") drawAutoText(dg.value, LEFT_MARGIN, 525, 420, 34, 700);
     if(idn.value.trim() !== "") drawAutoText("ID No - " + idn.value, LEFT_MARGIN, 580, 420, 30, 700);
@@ -231,25 +240,44 @@ function draw() {
     if(imgs.back.complete) bctx.drawImage(imgs.back, 0, 0, 1011, 638);
 }
 
-fc.onmousedown = e => {
+// TOUCH SUPPORT: Pointer Events handle Mouse + Touch fingers
+fc.onpointerdown = e => {
     const r = fc.getBoundingClientRect();
     const x = (e.clientX - r.left) * (1011 / r.width);
     const y = (e.clientY - r.top) * (638 / r.height);
-    if(imgs.photo && x > photo.x + photo.w - 25 && y > photo.y + photo.h - 25) { drag = photo; mode = "resize"; return; }
-    if(!overlayLocked && x > overlay.x && x < overlay.x + overlay.w && y > overlay.y && y < overlay.y + overlay.h) { drag = overlay; mode = "move"; ox = x - overlay.x; oy = y - overlay.y; return; }
-    if(imgs.photo && x > photo.x && x < photo.x + photo.w && y > photo.y && y < photo.y + photo.h) { drag = photo; mode = "move"; ox = x - photo.x; oy = y - photo.y; }
+    
+    // Resize Detection (Corner Circle Handle)
+    if(imgs.photo && Math.hypot(x - (photo.x + photo.w), y - (photo.y + photo.h)) < 35) { 
+        drag = photo; mode = "resize"; return; 
+    }
+    // Overlay Move
+    if(!overlayLocked && x > overlay.x && x < overlay.x + overlay.w && y > overlay.y && y < overlay.y + overlay.h) { 
+        drag = overlay; mode = "move"; ox = x - overlay.x; oy = y - overlay.y; return; 
+    }
+    // Photo Move
+    if(imgs.photo && x > photo.x && x < photo.x + photo.w && y > photo.y && y < photo.y + photo.h) { 
+        drag = photo; mode = "move"; ox = x - photo.x; oy = y - photo.y; 
+    }
 };
 
-window.onmousemove = e => {
+window.onpointermove = e => {
     if(!drag) return;
     const r = fc.getBoundingClientRect();
     const x = (e.clientX - r.left) * (1011 / r.width);
     const y = (e.clientY - r.top) * (638 / r.height);
-    if(mode === "move") { drag.x = x - ox; drag.y = y - oy; } 
-    else if(mode === "resize") { photo.w = Math.max(80, x - photo.x); photo.h = Math.max(100, y - photo.y); }
+    
+    if(mode === "move") { 
+        drag.x = x - ox; drag.y = y - oy; 
+    } else if(mode === "resize") { 
+        // Aspect Ratio Lock (Photoshop Style - No face stretching)
+        let newW = Math.max(80, x - drag.x);
+        drag.w = newW;
+        drag.h = newW / aspect; 
+    }
     draw();
 };
-window.onmouseup = () => { drag = null; mode = null; };
+
+window.onpointerup = () => { drag = null; mode = null; };
 </script>
 
 </body>
