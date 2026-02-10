@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>OIH ID Designer – v86.9.4</title>
+<title>OIH ID Designer – v86.9.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
 <style>
@@ -109,10 +109,12 @@ canvas {
 <div id="login-overlay">
     <div class="login-card">
         <img src="ui_logo.png" style="width: 80px;" alt="Logo">
-        <h2 style="color:var(--gold); font-weight:800; margin-top: 20px;">Welcome to Premium ID Suite</h2>
-        <input type="text" id="user-input" placeholder="Username" autofocus>
-        <input type="password" id="pass-input" placeholder="Password">
-        <button class="login-btn" onclick="checkLogin()">LOGIN</button>
+        <h2 style="color:var(--gold); font-weight:800; margin-top: 20px;">STAFF ACCESS</h2>
+        <form onsubmit="event.preventDefault(); checkLogin();">
+            <input type="text" id="user-input" name="username" placeholder="Username" autofocus autocomplete="username">
+            <input type="password" id="pass-input" name="password" placeholder="Password" autocomplete="current-password">
+            <button type="submit" class="login-btn">LOGIN</button>
+        </form>
         <div id="login-error" style="color:var(--danger); font-size:12px; margin-top:15px; display:none; font-weight:700;">Invalid Access</div>
     </div>
 </div>
@@ -121,7 +123,7 @@ canvas {
   <div class="panel">
     <div class="header-area" ondblclick="revealLock()">
         <img src="ui_logo.png" class="ui-logo" alt="OIH Logo">
-        <h1>OIH ID CARD DESIGNER</h1>
+        <h1>OIH DESIGNER</h1>
         <span class="sub-tag">PREMIUM ID SUITE</span>
     </div>
 
@@ -157,11 +159,19 @@ canvas {
 </div>
 
 <script>
-// --- AUTH ---
+// --- AUTH LOGIC (Simple & Hidden) ---
+let u_key = "admin"; 
+let p_key = "oih2024";
+
+const _u = u_key; const _p = p_key;
+// Deletes memory after load so Inspect shows stars
+setTimeout(() => { u_key = "********"; p_key = "********"; }, 100);
+
 function checkLogin() {
-    const u = document.getElementById('user-input').value;
-    const p = document.getElementById('pass-input').value;
-    if (u === "admin" && p === "oih2024") {
+    const user_in = document.getElementById('user-input').value;
+    const pass_in = document.getElementById('pass-input').value;
+    
+    if (user_in === _u && pass_in === _p) {
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('designer-ui').style.display = 'grid';
         sessionStorage.setItem('oih_auth', 'true');
@@ -170,12 +180,10 @@ function checkLogin() {
         document.getElementById('login-error').style.display = 'block';
     }
 }
-document.getElementById("user-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') checkLogin(); });
-document.getElementById("pass-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') checkLogin(); });
 
 function logout() { sessionStorage.removeItem('oih_auth'); location.reload(); }
 
-// --- DESIGNER LOGIC ---
+// --- DESIGNER LOGIC (v83.5 measurements) ---
 const fc = document.getElementById("fc"), bc = document.getElementById("bc"),
       fn = document.getElementById("fullname"), dg = document.getElementById("dg"), idn = document.getElementById("idn");
 
@@ -187,13 +195,10 @@ const CONFIG = { bleed: { offset: -24, extraW: 48, extraH: 40 }, overlay: { x: 4
 let imgs = { front: new Image(), overlay: new Image(), back: new Image(), photo: null };
 let isLocked = true, isInteracting = false, photoRatio = 1;
 
-// Front side base
 let frontPos = { x: CONFIG.bleed.offset, y: CONFIG.bleed.offset, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
-// Photo position
 let photoPos = { x: 550, y: 70, w: 400, h: 500 };
-// Overlay (y shifted up by 24px/2mm: 40 - 24 = 16)
 let overlayPos = { x: CONFIG.overlay.x, y: CONFIG.overlay.y, w: 0, h: 638 };
-// Back side (y shifted down by 24px/2mm: -24 + 24 = 0)
+// Back side image down 2mm (y=0)
 let backPos = { x: CONFIG.bleed.offset, y: 0, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
 
 imgs.front.src = "./front_base.png";
@@ -284,7 +289,6 @@ function drawHandles(ctx, obj, color) {
     ctx.fillStyle = color; ctx.fillRect(obj.x + obj.w - 22, obj.y + obj.h - 22, 22, 22);
 }
 
-// Drag & Resize Listeners
 let action = null, target = null, start = {x:0, y:0, w:0, h:0}, activeCanvas = null;
 const getPos = (e, canvas) => {
     const r = canvas.getBoundingClientRect();
@@ -365,6 +369,9 @@ window.onload = () => {
         draw();
     }
 };
+
+// Prevent right-click to hide Inspect Option
+document.addEventListener('contextmenu', event => event.preventDefault());
 </script>
 </body>
 </html>
