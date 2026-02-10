@@ -6,7 +6,339 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
 <style>
+:root { <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OIH ID Designer – v85.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+
+<style>
 :root { 
+    --gold: #c9a035; 
+    --bg-dark: #000000;
+    --panel-bg: rgba(20, 20, 20, 0.95);
+    --input-fill: #e0f2fe; 
+    --danger: #ef4444;
+}
+
+body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: #fff; overflow-x: hidden; touch-action: none; }
+
+/* Login Overlay */
+#login-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg-dark); z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+.login-card {
+    background: var(--panel-bg); padding: 40px; border-radius: 24px;
+    border: 1px solid var(--gold); width: 320px; text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.login-card h2 { color: var(--gold); font-size: 20px; margin-bottom: 20px; }
+.login-card input {
+    width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px;
+    border: 2px solid #333; background: var(--input-fill); font-weight: 700; box-sizing: border-box;
+}
+.login-btn {
+    width: 100%; margin-top: 20px; padding: 12px; border-radius: 10px;
+    background: var(--gold); color: #000; border: none; cursor: pointer; font-weight: 800;
+}
+#login-error { color: var(--danger); font-size: 13px; margin-top: 15px; display: none; font-weight: 700; }
+
+/* Designer Layout */
+.wrap { max-width: 1240px; margin: auto; padding: 20px; display: grid; grid-template-columns: 350px 1fr; gap: 25px; }
+.panel {
+  background: var(--panel-bg); border-radius: 20px; padding: 25px; height: fit-content;
+  position: sticky; top: 20px; border: 1px solid rgba(255,255,255,0.1);
+}
+
+.header-area { cursor: pointer; user-select: none; margin-bottom: 20px; text-align: center; }
+.ui-logo { width: 100%; max-height: 80px; object-fit: contain; margin-bottom: 10px; display: block; }
+h1 { font-size: 18px; color: var(--gold); margin: 0; letter-spacing: 1px; font-weight: 800; }
+.sub-tag { font-size: 9px; opacity: 0.5; display: block; letter-spacing: 2px; }
+
+label { font-size: 10px; font-weight: 800; margin-top: 15px; display: block; text-transform: uppercase; }
+
+.file-box {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--input-fill); color: #000; border: 2px solid var(--gold);
+    border-radius: 8px; margin-top: 5px; padding: 8px 12px; font-weight: 700; font-size: 13px;
+    cursor: pointer; overflow: hidden;
+}
+.file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.inline-clear { color: var(--danger); font-size: 18px; margin-left: 10px; cursor: pointer; padding: 0 5px; display: none; }
+
+input[type="text"] {
+  width: 100%; padding: 10px; border-radius: 8px; margin-top: 5px; box-sizing: border-box;
+  background: var(--input-fill); color: #000; border: 2px solid var(--gold); font-weight: 700;
+}
+
+.ai-btn {
+  width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px;
+  background: #6366f1; color: #fff; border: none; cursor: pointer; font-weight: 700;
+}
+
+.action-row { display: flex; gap: 10px; margin-top: 20px; }
+.icon-btn {
+  flex: 1; height: 45px; border-radius: 10px; border: none; 
+  cursor: pointer; display: flex; align-items: center; justify-content: center; 
+  font-size: 20px; transition: 0.2s;
+}
+.save-btn { background: #10b981; color: white; }
+.print-btn { background: #3b82f6; color: white; }
+.lock-btn { background: #374151; color: white; border: 1px solid rgba(255,255,255,0.1); display: none; }
+.lock-btn.unlocked { background: var(--gold); }
+
+canvas { 
+    width: 100%; max-width: 1011px; height: auto; 
+    border-radius: 14px; background: #1a1a1a; 
+    display: block; border: 1px solid #333; margin-bottom: 20px;
+}
+
+@media print {
+    @page { margin: 0; size: auto; }
+    body { background: white !important; }
+    #login-overlay, .panel { display: none !important; }
+    .wrap { display: block; padding: 0; margin: 0; }
+    canvas { border: none !important; margin: 0 !important; page-break-after: always; width: 100% !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="login-overlay">
+    <div class="login-card">
+        <img src="ui_logo.png" style="width: 100px; margin-bottom: 10px;" alt="Logo">
+        <h2>STAFF ACCESS</h2>
+        <input type="text" id="user-input" placeholder="Username">
+        <input type="password" id="pass-input" placeholder="Password">
+        <button class="login-btn" onclick="checkLogin()">LOGIN</button>
+        <div id="login-error">Invalid Username or Password</div>
+    </div>
+</div>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="header-area" ondblclick="revealLock()">
+        <img src="ui_logo.png" class="ui-logo" alt="OIH Logo">
+        <h1>OIH DESIGNER</h1>
+        <span class="sub-tag">PREMIUM ID SUITE</span>
+    </div>
+
+    <label>Photo</label>
+    <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="loadPhoto(event)">
+    <div class="file-box" onclick="document.getElementById('photoInput').click()">
+        <span class="file-name" id="displayFileName">Choose Photo...</span>
+        <span class="inline-clear" id="clearBtn" onclick="clearPhotoManual(event)">✕</span>
+    </div>
+
+    <button class="ai-btn" onclick="removeBackgroundAI()">✨ Remove BG</button>
+    
+    <label>Full Name</label>
+    <input type="text" id="fullname" placeholder="Name" oninput="handleNameInput(this)">
+    <label>Title</label>
+    <input type="text" id="dg" placeholder="Designation" oninput="draw()">
+    <label>ID Number</label>
+    <input type="text" id="idn" placeholder="ID Number" oninput="draw()">
+
+    <div class="action-row">
+        <button class="icon-btn save-btn" title="Save Front Only" onclick="saveAsPNG()">💾</button>
+        <button class="icon-btn print-btn" title="Print Both Sides" onclick="window.print()">🖨️</button>
+        <button class="icon-btn lock-btn" id="lockBtn" onclick="toggleLock()">
+            <span id="lockIcon">🔒</span>
+        </button>
+    </div>
+  </div>
+
+  <div id="print-area">
+    <canvas id="fc"></canvas>
+    <canvas id="bc"></canvas>
+  </div>
+</div>
+
+<script>
+// --- LOGIN & IDLE LOGIC ---
+let idleTimer;
+const IDLE_TIME_LIMIT = 5 * 60 * 1000; // 5 Minutes in milliseconds
+
+function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    if (sessionStorage.getItem('oih_auth') === 'true') {
+        idleTimer = setTimeout(logout, IDLE_TIME_LIMIT);
+    }
+}
+
+function logout() {
+    sessionStorage.removeItem('oih_auth');
+    location.reload(); // Force refresh to show login screen
+}
+
+function checkLogin() {
+    const u = document.getElementById('user-input').value;
+    const p = document.getElementById('pass-input').value;
+    const error = document.getElementById('login-error');
+
+    if (u === "admin" && p === "Muscat@2026!") {
+        document.getElementById('login-overlay').style.display = 'none';
+        sessionStorage.setItem('oih_auth', 'true');
+        resetIdleTimer();
+    } else {
+        error.style.display = 'block';
+    }
+}
+
+window.onload = function() {
+    if (sessionStorage.getItem('oih_auth') === 'true') {
+        document.getElementById('login-overlay').style.display = 'none';
+        resetIdleTimer();
+    }
+
+    // Keyboard Enter support
+    const loginFields = [document.getElementById('user-input'), document.getElementById('pass-input')];
+    loginFields.forEach(field => {
+        field.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") { e.preventDefault(); checkLogin(); }
+        });
+    });
+
+    // Idle activity listeners
+    window.addEventListener('mousemove', resetIdleTimer);
+    window.addEventListener('mousedown', resetIdleTimer);
+    window.addEventListener('keypress', resetIdleTimer);
+    window.addEventListener('touchstart', resetIdleTimer);
+    window.addEventListener('scroll', resetIdleTimer);
+};
+
+// --- DESIGNER ENGINE ---
+const fc = document.getElementById("fc"), bc = document.getElementById("bc"),
+      fn = document.getElementById("fullname"), dg = document.getElementById("dg"), idn = document.getElementById("idn"),
+      fileText = document.getElementById("displayFileName"), clearBtn = document.getElementById("clearBtn");
+
+fc.width = bc.width = 1011; fc.height = bc.height = 638;
+const fctx = fc.getContext("2d"), bctx = bc.getContext("2d");
+
+const CONFIG = {
+    bleed: { xOff: -24, yOffFront: -24, yOffBack: 0, extraW: 48, extraH: 40 },
+    overlay: { x: 440, y: 40, widthScale: 1.10 },
+    textX: 82 
+};
+
+let imgs = { front: new Image(), overlay: new Image(), back: new Image(), photo: null };
+let isLocked = true, isInteracting = false, photoRatio = 1;
+
+let frontPos = { x: CONFIG.bleed.xOff, y: CONFIG.bleed.yOffFront, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
+let photoPos = { x: 550, y: 70, w: 400, h: 500 };
+let overlayPos = { x: CONFIG.overlay.x, y: CONFIG.overlay.y, w: 0, h: 638 };
+let backPos = { x: CONFIG.bleed.xOff, y: CONFIG.bleed.yOffBack, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
+
+imgs.front.src = "./front_base.png";
+imgs.overlay.src = "./gold_overlay.png";
+imgs.back.src = "./back_base.png";
+
+imgs.overlay.onload = () => {
+    const scaleFactor = 638 / imgs.overlay.height; 
+    overlayPos.w = (imgs.overlay.width * scaleFactor) * CONFIG.overlay.widthScale;
+    draw();
+};
+imgs.front.onload = imgs.back.onload = draw;
+
+function clearPhotoManual(e) { e.stopPropagation(); imgs.photo = null; document.getElementById('photoInput').value = ""; fileText.innerText = "Choose Photo..."; clearBtn.style.display = "none"; draw(); }
+
+function loadPhoto(e) {
+    const file = e.target.files[0]; if(!file) return;
+    fileText.innerText = file.name; clearBtn.style.display = "block";
+    const r = new FileReader();
+    r.onload = ev => {
+        const i = new Image();
+        i.onload = () => { imgs.photo = i; photoRatio = i.width / i.height; photoPos.h = photoPos.w / photoRatio; draw(); };
+        i.src = ev.target.result;
+    };
+    r.readAsDataURL(file);
+}
+
+function handleNameInput(el) {
+    let words = el.value.split(" ");
+    for (let i = 0; i < words.length; i++) { if (words[i].length > 0) words[i] = words[i][0].toUpperCase() + words[i].substr(1).toLowerCase(); }
+    el.value = words.join(" "); draw();
+}
+
+function revealLock() { const btn = document.getElementById("lockBtn"); btn.style.display = (btn.style.display === "flex") ? "none" : "flex"; }
+function toggleLock() { isLocked = !isLocked; document.getElementById("lockBtn").classList.toggle("unlocked", !isLocked); document.getElementById("lockIcon").innerText = isLocked ? "🔒" : "🔓"; draw(); }
+
+function fillTextSmart(ctx, text, x, y, maxW, baseSize, weight) {
+    let size = baseSize; ctx.font = `${weight} ${size}px Inter`;
+    while (ctx.measureText(text).width > maxW && size > 10) { size--; ctx.font = `${weight} ${size}px Inter`; }
+    ctx.fillText(text, x, y);
+}
+
+function draw() {
+    fctx.clearRect(0, 0, 1011, 638);
+    if(imgs.front.complete) fctx.drawImage(imgs.front, frontPos.x, frontPos.y, frontPos.w, frontPos.h);
+    if(imgs.photo) fctx.drawImage(imgs.photo, photoPos.x, photoPos.y, photoPos.w, photoPos.h);
+    if(imgs.overlay.complete) fctx.drawImage(imgs.overlay, overlayPos.x, overlayPos.y, overlayPos.w, overlayPos.h);
+    fctx.fillStyle = "#000";
+    if(fn.value) fillTextSmart(fctx, fn.value, CONFIG.textX, 465, 450, 46, "800");
+    if(dg.value) fillTextSmart(fctx, dg.value, CONFIG.textX, 525, 450, 34, "700");
+    if(idn.value) fillTextSmart(fctx, "ID No - " + idn.value, CONFIG.textX, 580, 450, 30, "700");
+    if(isInteracting) {
+        if(imgs.photo) drawHandles(fctx, photoPos, "rgba(201, 160, 53, 0.7)");
+        if(!isLocked) drawHandles(fctx, overlayPos, "rgba(201, 160, 53, 0.8)");
+    }
+    bctx.clearRect(0, 0, 1011, 638);
+    if(imgs.back.complete) bctx.drawImage(imgs.back, backPos.x, backPos.y, backPos.w, backPos.h);
+}
+
+function drawHandles(ctx, obj, color) { ctx.setLineDash([6, 4]); ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(obj.x, obj.y, obj.w, obj.h); ctx.setLineDash([]); ctx.fillStyle = color; ctx.fillRect(obj.x + obj.w - 22, obj.y + obj.h - 22, 22, 22); }
+
+let action = null, target = null, start = {x:0, y:0, w:0, h:0}, activeCanvas = null;
+const getPos = (e, canvas) => { const r = canvas.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: (cx - r.left) * (1011 / r.width), y: (cy - r.top) * (638 / r.height) }; };
+
+const initDrag = (e, canvas, isFront) => {
+    isInteracting = true; activeCanvas = canvas; const p = getPos(e, canvas);
+    const check = (obj, canAdjust) => {
+        if(!canAdjust) return null;
+        if(p.x > obj.x + obj.w - 60 && p.x < obj.x + obj.w + 20 && p.y > obj.y + obj.h - 60 && p.y < obj.y + obj.h + 20) return "resize";
+        if(p.x > obj.x && p.x < obj.x + obj.w && p.y > obj.y && p.y < obj.y + obj.h) return "move";
+        return null;
+    };
+    if(isFront) { let res = check(photoPos, true); if(res) { target = photoPos; action = res; } else { res = check(overlayPos, !isLocked); if(res) { target = overlayPos; action = res; } else if(!isLocked) { target = frontPos; action = "move"; } } }
+    else if(!isLocked) { target = backPos; action = "move"; }
+    if(target) start = { x: p.x - target.x, y: p.y - target.y, w: target.w, h: target.h, px: p.x, py: p.y };
+    draw();
+};
+
+window.addEventListener('mousemove', e => { if(!target || !activeCanvas) return; const p = getPos(e, activeCanvas); if(action === "move") { target.x = p.x - start.x; target.y = p.y - start.y; } else if(action === "resize") { let newW = Math.max(50, start.w + (p.x - start.px)); target.w = newW; if(target === photoPos) target.h = newW / photoRatio; else target.h = Math.max(50, start.h + (p.y - start.py)); } draw(); });
+window.addEventListener('touchmove', e => { if(!target || !activeCanvas) return; e.preventDefault(); const p = getPos(e, activeCanvas); if(action === "move") { target.x = p.x - start.x; target.y = p.y - start.y; } else if(action === "resize") { let newW = Math.max(50, start.w + (p.x - start.px)); target.w = newW; if(target === photoPos) target.h = newW / photoRatio; else target.h = Math.max(50, start.h + (p.y - start.py)); } draw(); }, {passive:false});
+window.addEventListener('mouseup', () => { isInteracting = false; target = null; action = null; activeCanvas = null; draw(); });
+window.addEventListener('touchend', () => { isInteracting = false; target = null; action = null; activeCanvas = null; draw(); });
+
+fc.addEventListener('mousedown', e => initDrag(e, fc, true));
+fc.addEventListener('touchstart', e => { e.preventDefault(); initDrag(e, fc, true); }, {passive:false});
+bc.addEventListener('mousedown', e => initDrag(e, bc, false));
+bc.addEventListener('touchstart', e => { e.preventDefault(); initDrag(e, bc, false); }, {passive:false});
+
+async function removeBackgroundAI() {
+    const file = document.getElementById('photoInput').files[0]; if(!file) return;
+    const fd = new FormData(); fd.append('image_file', file);
+    const res = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': "qTFEG8utmvdapiXgqb2fN3gt" }, body: fd });
+    if(res.ok) { const b = await res.blob(); const i = new Image(); i.onload = () => { imgs.photo = i; photoRatio = i.width / i.height; photoPos.h = photoPos.w / photoRatio; draw(); }; i.src = URL.createObjectURL(b); }
+}
+
+function saveAsPNG() {
+    isInteracting = false; draw();
+    const nameStr = fn.value.trim();
+    const idStr = idn.value.trim();
+    let fileNameBase = (idStr !== "") ? `${nameStr}_${idStr}` : (nameStr !== "" ? nameStr : "ID");
+    const safeBase = fileNameBase.replace(/\s+/g, '_');
+    const link = document.createElement('a');
+    link.download = `${safeBase}_Front.png`;
+    link.href = fc.toDataURL("image/png");
+    link.click();
+}
+</script>
+</body>
+</html>
     --gold: #c9a035; 
     --bg-dark: #000000;
     --panel-bg: rgba(20, 20, 20, 0.95);
