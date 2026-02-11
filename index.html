@@ -134,12 +134,34 @@ canvas {
 }
 
 @media print {
-    @page { margin: 0; size: auto; }
-    body { background: white !important; overflow: hidden !important; }
-    .panel, #ai-loader, #login-overlay, #bc { display: none !important; }
-    .wrap { display: block; padding: 0; margin: 0; width: 100%; }
-    #print-area { width: 100%; height: 100vh; display: flex; align-items: flex-start; justify-content: center; }
-    #fc { border: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; page-break-after: avoid !important; }
+    @page { 
+        margin: 0; 
+        size: auto; 
+    }
+    body { background: white !important; }
+    
+    /* Hide UI Panels */
+    #login-overlay, .panel, #ai-loader { 
+        display: none !important; 
+    }
+    
+    .wrap { display: block; padding: 0; margin: 0; }
+    
+    /* Front Card - Page 1 */
+    #fc { 
+        border: none !important; 
+        margin: 0 !important; 
+        width: 100% !important;
+        page-break-after: always !important; /* Forces Back Side to Page 2 */
+    }
+    
+    /* Back Card - Page 2 */
+    #bc { 
+        display: block !important; /* Make sure it's not hidden! */
+        border: none !important; 
+        margin: 0 !important; 
+        width: 100% !important;
+    }
 }
 </style>
 </head>
