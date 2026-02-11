@@ -16,6 +16,44 @@
 
 body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); color: #fff; overflow-x: hidden; touch-action: none; }
 
+/* --- AI SCANNER LOADER --- */
+#ai-loader {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+    z-index: 20000; flex-direction: column; align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.scanner-container {
+    position: relative;
+    width: 200px; height: 150px;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.scanner-logo { width: 120px; opacity: 0.4; }
+
+.scanner-line {
+    position: absolute;
+    width: 160px; height: 3px;
+    background: var(--gold);
+    box-shadow: 0 0 15px var(--gold), 0 0 30px var(--gold);
+    z-index: 10;
+    animation: scanMove 2s ease-in-out infinite;
+}
+
+@keyframes scanMove {
+    0% { top: 10%; opacity: 0; }
+    50% { opacity: 1; }
+    100% { top: 90%; opacity: 0; }
+}
+
+#prog-text {
+    color: var(--gold); font-weight: 800; font-size: 36px;
+    margin-top: 20px; letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(201, 160, 53, 0.4);
+}
+
+.scan-msg { font-size: 10px; letter-spacing: 4px; color: #666; margin-top: 5px; font-weight: 700; }
+
 /* --- LOGIN SCREEN --- */
 #login-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -98,13 +136,22 @@ canvas {
 @media print {
     @page { margin: 0; size: auto; }
     body { background: white !important; }
-    #login-overlay, .panel { display: none !important; }
+    #login-overlay, .panel, #ai-loader { display: none !important; }
     .wrap { display: block; padding: 0; margin: 0; }
     canvas { border: none !important; margin: 0 !important; page-break-after: always; width: 100% !important; }
 }
 </style>
 </head>
 <body>
+
+<div id="ai-loader">
+    <div class="scanner-container">
+        <div class="scanner-line"></div>
+        <img src="ui_logo.png" class="scanner-logo">
+    </div>
+    <div id="prog-text">0%</div>
+    <div class="scan-msg">REMOVING BACKGROUND</div>
+</div>
 
 <div id="login-overlay">
     <div class="login-card">
@@ -159,18 +206,16 @@ canvas {
 </div>
 
 <script>
-// --- AUTH LOGIC (Simple & Hidden) ---
+// --- AUTH LOGIC ---
 let u_key = "admin"; 
 let p_key = "oih2026";
 
 const _u = u_key; const _p = p_key;
-// Deletes memory after load so Inspect shows stars
 setTimeout(() => { u_key = "********"; p_key = "********"; }, 100);
 
 function checkLogin() {
     const user_in = document.getElementById('user-input').value;
     const pass_in = document.getElementById('pass-input').value;
-    
     if (user_in === _u && pass_in === _p) {
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('designer-ui').style.display = 'grid';
@@ -180,10 +225,9 @@ function checkLogin() {
         document.getElementById('login-error').style.display = 'block';
     }
 }
-
 function logout() { sessionStorage.removeItem('oih_auth'); location.reload(); }
 
-// --- DESIGNER LOGIC (v83.5 measurements) ---
+// --- DESIGNER LOGIC ---
 const fc = document.getElementById("fc"), bc = document.getElementById("bc"),
       fn = document.getElementById("fullname"), dg = document.getElementById("dg"), idn = document.getElementById("idn");
 
@@ -191,14 +235,12 @@ fc.width = bc.width = 1011; fc.height = bc.height = 638;
 const fctx = fc.getContext("2d"), bctx = bc.getContext("2d");
 
 const CONFIG = { bleed: { offset: -24, extraW: 48, extraH: 40 }, overlay: { x: 440, y: 16, widthScale: 1.10 } };
-
 let imgs = { front: new Image(), overlay: new Image(), back: new Image(), photo: null };
 let isLocked = true, isInteracting = false, photoRatio = 1;
 
 let frontPos = { x: CONFIG.bleed.offset, y: CONFIG.bleed.offset, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
 let photoPos = { x: 550, y: 70, w: 400, h: 500 };
 let overlayPos = { x: CONFIG.overlay.x, y: CONFIG.overlay.y, w: 0, h: 638 };
-// Back side image down 2mm (y=0)
 let backPos = { x: CONFIG.bleed.offset, y: 0, w: 1011 + CONFIG.bleed.extraW, h: 638 + CONFIG.bleed.extraH };
 
 imgs.front.src = "./front_base.png";
@@ -278,7 +320,6 @@ function draw() {
         if(imgs.photo) drawHandles(fctx, photoPos, "rgba(201, 160, 53, 0.7)");
         if(!isLocked) drawHandles(fctx, overlayPos, "rgba(201, 160, 53, 0.8)");
     }
-
     bctx.clearRect(0, 0, 1011, 638);
     if(imgs.back.complete) bctx.drawImage(imgs.back, backPos.x, backPos.y, backPos.w, backPos.h);
 }
@@ -289,6 +330,7 @@ function drawHandles(ctx, obj, color) {
     ctx.fillStyle = color; ctx.fillRect(obj.x + obj.w - 22, obj.y + obj.h - 22, 22, 22);
 }
 
+// Interaction
 let action = null, target = null, start = {x:0, y:0, w:0, h:0}, activeCanvas = null;
 const getPos = (e, canvas) => {
     const r = canvas.getBoundingClientRect();
@@ -336,18 +378,52 @@ window.addEventListener('mouseup', () => { isInteracting = false; target = null;
 fc.addEventListener('mousedown', e => initDrag(e, fc, true));
 bc.addEventListener('mousedown', e => initDrag(e, bc, false));
 
+// --- REMOVE BACKGROUND WITH LASER SCANNER ---
 async function removeBackgroundAI() {
     const file = document.getElementById('photoInput').files[0];
-    if(!file) return;
-    const fd = new FormData(); fd.append('image_file', file);
-    const res = await fetch('https://api.remove.bg/v1.0/removebg', {
-        method: 'POST', headers: { 'X-Api-Key': "qTFEG8utmvdapiXgqb2fN3gt" }, body: fd
-    });
-    if(res.ok) {
-        const b = await res.blob();
-        const i = new Image(); i.onload = () => { imgs.photo = i; photoRatio = i.width/i.height; draw(); };
-        i.src = URL.createObjectURL(b);
+    if(!file) return alert("Please select a photo first.");
+    
+    const loader = document.getElementById('ai-loader');
+    const pText = document.getElementById('prog-text');
+    loader.style.display = 'flex';
+
+    // Simulate progress
+    let prog = 0;
+    const interval = setInterval(() => {
+        if(prog < 90) {
+            prog += Math.floor(Math.random() * 7);
+            pText.innerText = prog + '%';
+        }
+    }, 400);
+
+    try {
+        const fd = new FormData(); fd.append('image_file', file);
+        const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+            method: 'POST', 
+            headers: { 'X-Api-Key': "qTFEG8utmvdapiXgqb2fN3gt" }, 
+            body: fd
+        });
+
+        if(res.ok) {
+            pText.innerText = '100%';
+            const b = await res.blob();
+            const i = new Image(); 
+            i.onload = () => { 
+                imgs.photo = i; 
+                photoRatio = i.width/i.height; 
+                photoPos.h = photoPos.w / photoRatio;
+                draw(); 
+                setTimeout(() => { loader.style.display = 'none'; }, 500);
+            };
+            i.src = URL.createObjectURL(b);
+        } else {
+            alert("API Error - Please check your key.");
+            loader.style.display = 'none';
+        }
+    } catch (e) {
+        loader.style.display = 'none';
     }
+    clearInterval(interval);
 }
 
 function saveAsPNG() {
@@ -370,7 +446,6 @@ window.onload = () => {
     }
 };
 
-// Prevent right-click to hide Inspect Option
 document.addEventListener('contextmenu', event => event.preventDefault());
 </script>
 </body>
