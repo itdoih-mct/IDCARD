@@ -138,29 +138,45 @@ canvas {
         margin: 0; 
         size: auto; 
     }
-    body { background: white !important; }
+    body { 
+        background: white !important; 
+        margin: 0 !important; 
+        padding: 0 !important;
+    }
     
-    /* Hide UI Panels */
-    #login-overlay, .panel, #ai-loader { 
+    /* Hide everything except the cards */
+    #login-overlay, .panel, #ai-loader, .sub-tag, .scan-msg { 
         display: none !important; 
     }
     
-    .wrap { display: block; padding: 0; margin: 0; }
-    
-    /* Front Card - Page 1 */
-    #fc { 
-        border: none !important; 
+    .wrap { 
+        display: block !important; 
+        padding: 0 !important; 
         margin: 0 !important; 
-        width: 100% !important;
-        page-break-after: always !important; /* Forces Back Side to Page 2 */
     }
-    
-    /* Back Card - Page 2 */
-    #bc { 
-        display: block !important; /* Make sure it's not hidden! */
+
+    #print-area {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* PAGE 1: Front Canvas */
+    #fc { 
+        display: block !important;
         border: none !important; 
         margin: 0 !important; 
         width: 100% !important;
+        page-break-after: always !important; /* This forces the back to the next page */
+    }
+
+    /* PAGE 2: Back Canvas */
+    #bc { 
+        display: block !important;
+        border: none !important; 
+        margin: 0 !important; 
+        width: 100% !important;
+        page-break-before: avoid !important; /* Prevents the blank gap */
     }
 }
 </style>
