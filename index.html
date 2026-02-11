@@ -134,33 +134,12 @@ canvas {
 }
 
 @media print {
-    @page { 
-        margin: 0; 
-        size: auto; 
-    }
-    body { background: white !important; }
-    
-    /* Hide everything except the front canvas */
-    #login-overlay, .panel, #ai-loader, #bc { 
-        display: none !important; 
-    }
-    
-    .wrap { display: block; padding: 0; margin: 0; }
-    
-    /* Ensure the front canvas takes up the whole single page */
-    #fc { 
-        border: none !important; 
-        margin: 0 !important; 
-        width: 100% !important;
-        page-break-after: avoid !important;
-        page-break-before: avoid !important;
-    }
-    
-    /* Stop the browser from creating extra pages */
-    #print-area {
-        height: 100vh;
-        overflow: hidden;
-    }
+    @page { margin: 0; size: auto; }
+    body { background: white !important; overflow: hidden !important; }
+    .panel, #ai-loader, #login-overlay, #bc { display: none !important; }
+    .wrap { display: block; padding: 0; margin: 0; width: 100%; }
+    #print-area { width: 100%; height: 100vh; display: flex; align-items: flex-start; justify-content: center; }
+    #fc { border: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; page-break-after: avoid !important; }
 }
 </style>
 </head>
