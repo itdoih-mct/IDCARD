@@ -427,15 +427,17 @@ async function removeBackgroundAI() {
 }
 
 function saveAsPNG() {
-    isInteracting = false; draw();
+    isInteracting = false; 
+    draw();
+    
     const name = (fn.value || "ID").trim().replace(/\s+/g, '_');
     const id = (idn.value || "000").trim().replace(/\s+/g, '_');
-    [fc, bc].forEach((c, i) => {
-        const link = document.createElement('a');
-        link.download = `${name}_${id}_${i===0?'Front':'Back'}.png`;
-        link.href = c.toDataURL("image/png");
-        link.click();
-    });
+
+    // Create just ONE link for the Front Canvas (fc)
+    const link = document.createElement('a');
+    link.download = `${name}_${id}_Front.png`;
+    link.href = fc.toDataURL("image/png");
+    link.click();
 }
 
 window.onload = () => {
